@@ -8,8 +8,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
-#include <mysql/mysql.h>
-#include "/usr/include/mariadb/mysql.h"
+#include "/home/ec2-user/mysql-connector/include/mysql.h"
 
 #define PORT 8080
 #define MAXSZ 100
@@ -21,7 +20,7 @@
 #define CHOP(x) x[strlen(x) - 1] = ' '
 
 #define BUF_LEN 128			//buffer length
-#define SERV_IP_ADDR "192.168.4.2"		//our IP addr
+#define SERV_IP_ADDR "54.180.52.108"		//our IP addr
 #define SERV_PORT 9000		//registered port 영역, server socket로 사용하는 영역의 것으로 define
 int main(int argc,char *argv[])
 {    
@@ -56,19 +55,64 @@ int main(int argc,char *argv[])
 		return 1;
 	}
 
-	query_stat = mysql_query(connection, "select * from con0001");
+	query_stat = mysql_query(connection, "select * from parking");
 	if (query_stat != 0)
 	{
 		fprintf(stderr, "2Mysql query error : %s", mysql_error(&conn));
 		return 1;
 	}
 
-    printf("Connection Sucess!");
+    printf("Connection Sucess!\n");
 
-	// sql_result = mysql_store_result(connection);
-	//  mysql_free_result(sql_result);
+	sql_result = mysql_store_result(connection);
+	mysql_free_result(sql_result);
 
 
+
+    char sArr[20][20] = {"1", "1", "2", "1", "3", "1", "4", "1", "5", "1", "6", "1"};
+    //---------------- After Receive Data -----------------
+
+    // set time now
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    char now[20];
+    sprintf(now, "%d-%d-%d %d:%d:%d", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+    // get state from 'parking' table
+    char query[1001];
+    sprintf(query, "SELECT state FROM parking");
+    printf(query);
+    printf("\n");
+
+    query_stat = mysql_query(connection, query);
+    if (query_stat != 0)
+    {
+        fprintf(stderr, "3Mysql query error : %s\n", mysql_error(&conn));
+    }
+
+    sql_result = mysql_store_result(connection);
+    int i = 0;
+    while ((sql_row = mysql_fetch_row(sql_result)) != NULL){
+        printf("%d %s\t", i, sql_row[0]);
+        if (sql_row[0][0] != sArr[2*i+1][0]){     // if state changed
+            printf("%s %s\t", sql_row[0], sArr[2*i+1]);
+            char query[1001];
+            sprintf(query, "UPDATE parking SET state=%s,park_time='%s' WHERE id=%s", sArr[2*i+1], now, sArr[2*i]);
+            printf(query);
+            printf("\n");
+            mysql_query(&conn, query);
+
+
+            query_stat = mysql_query(connection, query);
+            if (query_stat != 0)
+            {
+                fprintf(stderr, "3Mysql query error : %s\n", mysql_error(&conn));
+            }
+
+        }
+        i++;
+    }
+    printf("\n");
 
 	mysql_close(&conn);
 	return 0;
