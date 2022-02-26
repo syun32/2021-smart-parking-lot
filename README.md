@@ -79,7 +79,7 @@
 |  기능  |화면|
 |-------------|---------------------------|
 |사용자 모드|<img src=images/web_main.png  width="60%"/>|
-|관리자 모드|<img src=images/web_main.png  width="60%"/>|
+|관리자 모드|<img src=images/web_admin.png  width="60%"/>|
 
 
 
